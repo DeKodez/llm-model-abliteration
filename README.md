@@ -17,7 +17,7 @@ python scripts/run_abliteration.py --model Qwen/Qwen2.5-1.5B-Instruct
 
 ## Credits
 
-Based on the abliteration technique by Maxime Labonne:
+Based on an abliteration technique described in this article Maxime Labonne:
 - Article: https://huggingface.co/blog/mlabonne/abliteration
 - Original research: Arditi et al.
 
