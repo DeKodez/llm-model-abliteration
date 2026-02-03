@@ -1,10 +1,5 @@
 """
 Concrete implementations of instruction dataset loaders.
-
-SOLID Principles Applied:
-- Single Responsibility: Each class handles one dataset type
-- Open/Closed: New datasets can be added without modifying existing code
-- Dependency Inversion: Depends on abstract InstructionDataset interface
 """
 
 from typing import List, Any, Optional
