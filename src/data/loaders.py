@@ -3,7 +3,7 @@ Concrete implementations of instruction dataset loaders.
 """
 
 from typing import List, Any, Optional
-from datasets import load_dataset
+from datasets import load_dataset  # type: ignore[import-untyped]
 
 from .base import InstructionDataset
 

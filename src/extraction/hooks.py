@@ -5,7 +5,7 @@ This module replaces TransformerLens functionality using native PyTorch hooks.
 Hooks are registered on model layers to capture residual stream activations.
 """
 
-from typing import Dict, List, Callable, Any, Optional
+from typing import Dict, List, Callable, Any
 from dataclasses import dataclass, field
 import torch
 from torch import Tensor
@@ -47,8 +47,8 @@ class ActivationCollector:
             Hook function compatible with register_forward_hook
         """
         def hook_fn(
-            module: nn.Module,
-            input: Any,
+            _module: nn.Module,
+            _input: Any,
             output: Any,
         ) -> None:
             # Handle different output types
@@ -193,7 +193,7 @@ def get_layer_names_for_model(model: nn.Module, model_type: str = "auto") -> Dic
     #   - "mid": between attention and MLP (post_attention_layernorm)  
     #   - "post": output of block (the full block output)
     
-    result = {
+    result: Dict[str, List[str]] = {
         "pre": [],
         "mid": [],
         "post": [],
