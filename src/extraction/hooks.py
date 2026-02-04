@@ -9,7 +9,7 @@ from typing import Dict, List, Callable, Any
 from dataclasses import dataclass, field
 import torch
 from torch import Tensor
-import torch.nn as nn
+from torch import nn
 
 
 @dataclass

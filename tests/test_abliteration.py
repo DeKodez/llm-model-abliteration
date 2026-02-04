@@ -6,7 +6,6 @@ Tests core functionality without requiring full model loads.
 
 import pytest
 import torch
-from torch import Tensor
 import sys
 from pathlib import Path
 
