@@ -3,6 +3,10 @@ from .settings import (
     DataConfig,
     AbliterationConfig,
     ExtractionConfig,
+    PipelineConfig,
+    RefusalDirectionVariant,
+    AbliterationMethod,
+    ResidualStreamPosition,
 )
 
 __all__ = [
@@ -10,4 +14,8 @@ __all__ = [
     "DataConfig",
     "AbliterationConfig",
     "ExtractionConfig",
+    "PipelineConfig",
+    "RefusalDirectionVariant",
+    "AbliterationMethod",
+    "ResidualStreamPosition",
 ]

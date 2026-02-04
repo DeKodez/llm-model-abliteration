@@ -26,7 +26,7 @@ from config import PipelineConfig, ModelConfig, DataConfig, AbliterationConfig
 from src.model import ModelWrapper
 from src.data import HarmfulInstructionDataset, HarmlessInstructionDataset
 from src.extraction import ResidualStreamExtractor
-from src.analysis import RefusalDirectionAnalyzer
+from src.analysis import RefusalDirectionAnalyzer, DirectionVariant
 from src.abliteration import WeightOrthogonalizer
 
 
@@ -78,18 +78,27 @@ def parse_args() -> argparse.Namespace:
         help="Only run test generation, don't abliterate",
     )
     
+    parser.add_argument(
+        "--projected",
+        action="store_true",
+        help="Use projected abliteration (grimjim variant) instead of conventional",
+    )
+    
     return parser.parse_args()
 
 
-def run_abliteration(config: PipelineConfig) -> None:
+def run_abliteration(config: PipelineConfig, use_projected: bool = False) -> None:
     """
     Run the full abliteration pipeline.
     
     Args:
         config: Pipeline configuration
+        use_projected: Use projected abliteration variant
     """
+    variant_name = "projected" if use_projected else "conventional"
+    
     print("=" * 60)
-    print("LLM Abliteration Pipeline")
+    print(f"LLM Abliteration Pipeline ({variant_name})")
     print("=" * 60)
     
     # Step 1: Load model
@@ -152,7 +161,10 @@ def run_abliteration(config: PipelineConfig) -> None:
     
     # Step 4: Compute refusal directions
     print("\n[4/6] Computing refusal directions...")
-    analyzer = RefusalDirectionAnalyzer()
+    variant = DirectionVariant.PROJECTED if use_projected else DirectionVariant.CONVENTIONAL
+    analyzer = RefusalDirectionAnalyzer(variant=variant)
+    print(f"  Using {variant.value} abliteration")
+    
     directions = analyzer.compute_direction(
         harmful_activations=harmful_result.activations,
         harmless_activations=harmless_result.activations,
@@ -247,7 +259,7 @@ def main():
         # Disable gradients globally
         torch.set_grad_enabled(False)
         
-        run_abliteration(config)
+        run_abliteration(config, use_projected=args.projected)
         
         # Optionally test the result
         print("\n\nTesting abliterated model...")

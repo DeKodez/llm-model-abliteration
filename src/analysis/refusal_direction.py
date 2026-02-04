@@ -4,13 +4,23 @@ Refusal direction computation and analysis.
 Computes the refusal direction by comparing activations from harmful
 vs harmless prompts, identifying the direction in activation space
 that represents the model's refusal behavior.
+
+Supports two variants:
+- Conventional: r = μ_harmful - μ_harmless
+- Projected: removes the component parallel to harmless direction (grimjim)
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Any
 from dataclasses import dataclass
-import torch
+from enum import Enum
 from torch import Tensor
 import numpy as np
+
+
+class DirectionVariant(Enum):
+    """Variant for computing the refusal direction."""
+    CONVENTIONAL = "conventional"
+    PROJECTED = "projected"
 
 
 @dataclass
@@ -20,6 +30,7 @@ class RefusalDirection:
     layer_name: str
     direction: Tensor  # Normalized direction vector
     magnitude: float   # L2 norm before normalization
+    variant: str       # Which variant was used
     
     # Quality metrics
     cosine_similarity: float  # Similarity between harmful/harmless means
@@ -37,7 +48,20 @@ class RefusalDirectionAnalyzer:
     The refusal direction is the normalized difference between mean
     activations for harmful prompts and harmless prompts. This direction
     represents where in activation space the model "decides" to refuse.
+    
+    Supports two variants:
+    - CONVENTIONAL: Direct difference (Labonne/Arditi et al.)
+    - PROJECTED: Removes harmless-parallel component (grimjim)
     """
+    
+    def __init__(self, variant: DirectionVariant = DirectionVariant.CONVENTIONAL):
+        """
+        Initialize the analyzer.
+        
+        Args:
+            variant: Which refusal direction computation to use
+        """
+        self.variant = variant
     
     def compute_direction(
         self,
@@ -67,8 +91,15 @@ class RefusalDirectionAnalyzer:
             mean_harmful = harmful.mean(dim=0)
             mean_harmless = harmless.mean(dim=0)
             
-            # Refusal direction: harmful - harmless
-            raw_direction = mean_harmful - mean_harmless
+            # Compute refusal direction based on variant
+            if self.variant == DirectionVariant.PROJECTED:
+                raw_direction = self._compute_projected_direction(
+                    mean_harmful, mean_harmless
+                )
+            else:
+                # Conventional: harmful - harmless
+                raw_direction = mean_harmful - mean_harmless
+            
             magnitude = raw_direction.norm().item()
             
             # Normalize
@@ -85,11 +116,60 @@ class RefusalDirectionAnalyzer:
                 layer_name=layer_name,
                 direction=normalized,
                 magnitude=magnitude,
+                variant=self.variant.value,
                 cosine_similarity=cosine_sim,
                 separation_score=separation,
             )
         
         return directions
+    
+    @classmethod
+    def conventional(cls) -> "RefusalDirectionAnalyzer":
+        """Factory for conventional abliteration."""
+        return cls(variant=DirectionVariant.CONVENTIONAL)
+    
+    @classmethod
+    def projected(cls) -> "RefusalDirectionAnalyzer":
+        """Factory for projected abliteration."""
+        return cls(variant=DirectionVariant.PROJECTED)
+    
+    def _compute_projected_direction(
+        self,
+        mean_harmful: Tensor,
+        mean_harmless: Tensor,
+    ) -> Tensor:
+        """
+        Compute projected refusal direction (grimjim variant).
+        
+        Removes the component parallel to the harmless direction,
+        keeping only the orthogonal component that represents
+        refusal-specific behavior.
+        
+        r_proj = r - (r · μ̂_harmless) * μ̂_harmless
+        
+        Args:
+            mean_harmful: Mean activation for harmful prompts
+            mean_harmless: Mean activation for harmless prompts
+            
+        Returns:
+            Projected refusal direction
+        """
+        # Conventional refusal direction
+        raw_direction = mean_harmful - mean_harmless
+        
+        # Normalize harmless mean to unit vector
+        harmless_norm = mean_harmless.norm()
+        if harmless_norm < 1e-8:
+            return raw_direction
+        
+        harmless_normalized = mean_harmless / harmless_norm
+        
+        # Project out the harmless-parallel component
+        projection_scalar = raw_direction @ harmless_normalized
+        projection = projection_scalar * harmless_normalized
+        
+        # Return orthogonal component only
+        return raw_direction - projection
     
     def select_best_layers(
         self,
@@ -166,7 +246,7 @@ class RefusalDirectionAnalyzer:
     def get_summary_stats(
         self,
         directions: Dict[str, RefusalDirection],
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Get summary statistics for computed refusal directions.
         

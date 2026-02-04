@@ -1,6 +1,11 @@
-from .refusal_direction import RefusalDirectionAnalyzer, RefusalDirection
+from .refusal_direction import (
+    RefusalDirectionAnalyzer,
+    RefusalDirection,
+    DirectionVariant,
+)
 
 __all__ = [
     "RefusalDirectionAnalyzer",
     "RefusalDirection",
+    "DirectionVariant",
 ]

@@ -20,6 +20,12 @@ class AbliterationMethod(Enum):
     INFERENCE_TIME = "inference_time"
 
 
+class RefusalDirectionVariant(Enum):
+    """Variant for computing the refusal direction."""
+    CONVENTIONAL = "conventional"  # r = μ_harmful - μ_harmless
+    PROJECTED = "projected"        # r = r - (r · μ̂_harmless) * μ̂_harmless
+
+
 @dataclass
 class ModelConfig:
     """Configuration for model loading and saving."""
@@ -78,6 +84,9 @@ class AbliterationConfig:
     """Configuration for the abliteration process."""
     
     method: AbliterationMethod = AbliterationMethod.WEIGHT_ORTHOGONALIZATION
+    
+    # Refusal direction variant: conventional or projected
+    direction_variant: RefusalDirectionVariant = RefusalDirectionVariant.CONVENTIONAL
     
     # Layers to apply abliteration to (None = auto-select best)
     target_layers: Optional[List[int]] = None

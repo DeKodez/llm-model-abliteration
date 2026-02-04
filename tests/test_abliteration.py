@@ -17,11 +17,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class TestRefusalDirectionAnalyzer:
     """Tests for the RefusalDirectionAnalyzer class."""
     
-    def test_compute_direction_basic(self):
-        """Test basic refusal direction computation."""
+    def test_compute_direction_conventional(self):
+        """Test conventional refusal direction computation."""
         from src.analysis import RefusalDirectionAnalyzer
         
-        analyzer = RefusalDirectionAnalyzer()
+        analyzer = RefusalDirectionAnalyzer.conventional()
         
         # Create synthetic activations
         hidden_dim = 64
@@ -39,8 +39,36 @@ class TestRefusalDirectionAnalyzer:
         
         assert "layer_0" in result
         assert result["layer_0"].direction.shape == (hidden_dim,)
+        assert result["layer_0"].variant == "conventional"
         # Direction should be approximately normalized
         assert abs(result["layer_0"].direction.norm().item() - 1.0) < 1e-5
+    
+    def test_compute_direction_projected(self):
+        """Test projected refusal direction computation."""
+        from src.analysis import RefusalDirectionAnalyzer
+        
+        analyzer = RefusalDirectionAnalyzer.projected()
+        
+        hidden_dim = 64
+        n_harmful = 10
+        n_harmless = 10
+        
+        harmful = torch.randn(n_harmful, hidden_dim) + torch.tensor([1.0] * hidden_dim)
+        harmless = torch.randn(n_harmless, hidden_dim)
+        
+        result = analyzer.compute_direction(
+            harmful_activations={"layer_0": harmful},
+            harmless_activations={"layer_0": harmless},
+        )
+        
+        assert "layer_0" in result
+        assert result["layer_0"].variant == "projected"
+        
+        # Projected direction should be orthogonal to harmless mean
+        harmless_mean = harmless.mean(dim=0)
+        harmless_normalized = harmless_mean / harmless_mean.norm()
+        dot_product = (result["layer_0"].direction @ harmless_normalized).abs().item()
+        assert dot_product < 0.1  # Should be approximately orthogonal
     
     def test_select_best_layers(self):
         """Test layer selection based on separation scores."""
@@ -54,6 +82,7 @@ class TestRefusalDirectionAnalyzer:
                 layer_name="layer_0",
                 direction=torch.randn(64),
                 magnitude=1.0,
+                variant="conventional",
                 cosine_similarity=0.5,
                 separation_score=0.8,
             ),
@@ -61,6 +90,7 @@ class TestRefusalDirectionAnalyzer:
                 layer_name="layer_1",
                 direction=torch.randn(64),
                 magnitude=1.0,
+                variant="conventional",
                 cosine_similarity=0.5,
                 separation_score=0.3,
             ),
@@ -68,6 +98,7 @@ class TestRefusalDirectionAnalyzer:
                 layer_name="layer_2",
                 direction=torch.randn(64),
                 magnitude=1.0,
+                variant="conventional",
                 cosine_similarity=0.5,
                 separation_score=0.9,
             ),
