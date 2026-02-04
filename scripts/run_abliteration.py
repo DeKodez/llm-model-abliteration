@@ -84,6 +84,18 @@ def parse_args() -> argparse.Namespace:
         help="Use projected abliteration (grimjim variant) instead of conventional",
     )
     
+    parser.add_argument(
+        "--load-in-4bit",
+        action="store_true",
+        help="Load model in 4-bit quantization (reduces VRAM usage)",
+    )
+    
+    parser.add_argument(
+        "--load-in-8bit",
+        action="store_true",
+        help="Load model in 8-bit quantization (reduces VRAM usage)",
+    )
+    
     return parser.parse_args()
 
 
@@ -108,8 +120,14 @@ def run_abliteration(config: PipelineConfig, use_projected: bool = False) -> Non
         torch_dtype=config.model.torch_dtype,
         device_map=config.model.device_map,
         trust_remote_code=config.model.trust_remote_code,
+        load_in_4bit=config.model.load_in_4bit,
+        load_in_8bit=config.model.load_in_8bit,
     )
     print(f"  Model: {config.model.model_name_or_path}")
+    if config.model.load_in_4bit:
+        print("  Quantization: 4-bit")
+    elif config.model.load_in_8bit:
+        print("  Quantization: 8-bit")
     print(f"  Device: {wrapper.get_device()}")
     print(f"  Layers: {wrapper.get_n_layers()}")
     
@@ -237,12 +255,19 @@ def main():
     """Main entry point."""
     args = parse_args()
     
+    # Validate quantization options
+    if getattr(args, 'load_in_4bit', False) and getattr(args, 'load_in_8bit', False):
+        print("Error: Cannot use both --load-in-4bit and --load-in-8bit at the same time")
+        sys.exit(1)
+    
     # Build configuration
     config = PipelineConfig(
         model=ModelConfig(
             model_name_or_path=args.model,
             torch_dtype=args.dtype,
             output_dir=args.output,
+            load_in_4bit=getattr(args, 'load_in_4bit', False),
+            load_in_8bit=getattr(args, 'load_in_8bit', False),
         ),
         data=DataConfig(
             n_harmful_samples=args.n_samples,
