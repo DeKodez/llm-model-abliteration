@@ -57,7 +57,7 @@ class ModelWrapper:
         
         # Build model kwargs
         model_kwargs = {
-            "torch_dtype": dtype,
+            "dtype": dtype,
             "device_map": device_map,
             "trust_remote_code": trust_remote_code,
         }
