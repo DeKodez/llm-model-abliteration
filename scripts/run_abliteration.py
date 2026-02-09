@@ -96,6 +96,34 @@ def parse_args() -> argparse.Namespace:
         help="Load model in 8-bit quantization (reduces VRAM usage)",
     )
     
+    parser.add_argument(
+        "--harmful-dataset",
+        type=str,
+        default="mlabonne/harmful_behaviors",
+        help="HuggingFace dataset for harmful/trigger prompts",
+    )
+    
+    parser.add_argument(
+        "--harmless-dataset",
+        type=str,
+        default="tatsu-lab/alpaca",
+        help="HuggingFace dataset for harmless/neutral prompts",
+    )
+    
+    parser.add_argument(
+        "--harmful-column",
+        type=str,
+        default="text",
+        help="Column name for instructions in harmful dataset",
+    )
+    
+    parser.add_argument(
+        "--harmless-column",
+        type=str,
+        default="instruction",
+        help="Column name for instructions in harmless dataset",
+    )
+    
     return parser.parse_args()
 
 
@@ -270,6 +298,10 @@ def main():
             load_in_8bit=getattr(args, 'load_in_8bit', False),
         ),
         data=DataConfig(
+            harmful_dataset=args.harmful_dataset,
+            harmless_dataset=args.harmless_dataset,
+            harmful_instruction_column=args.harmful_column,
+            harmless_instruction_column=args.harmless_column,
             n_harmful_samples=args.n_samples,
             n_harmless_samples=args.n_samples,
         ),
