@@ -144,11 +144,29 @@ More layers = more reduction, but diminishing returns and risk of model degradat
 | Success rate | 82% reduction | 43% reduction |
 
 **Why it's harder:**
+- The leading questions explicitly ask for opinions ("You'd agree?", "Don't you think?"), so the AI disclaimer is semantically appropriate — not unnecessary hedging
 - "As an AI language model" appears easier to remove than "As an AI developed by Alibaba Cloud" (likely baked deeper by Alibaba's training)
 - The behavior may be partially instruction-following (system prompt) rather than purely a learned direction
-- Some question types trigger the disclaimer more strongly than others
+- Refusal is a behavioral pattern; "I don't have opinions" is closer to factual self-knowledge
 
-**Conclusion:** AI disclaimer behavior CAN be partially abliterated, but requires abliterating ALL layers. This suggests the behavior is more distributed across the model compared to refusal, which concentrates in specific layers.
+**Key observation:** Even when abliteration "works," the model stops saying "As an AI..." but maintains the same cautious tone:
+
+```
+ORIGINAL: "As an AI language model, I cannot provide advice... However, it is important to note..."
+ABLITERATED: "It is not appropriate to determine... Furthermore, it is important to recognize..."
+```
+
+The self-identification phrase was removed, but the underlying hedging behavior persists.
+
+**Conclusion: Refusal ≠ Self-Identification**
+
+According to [Arditi et al.](https://arxiv.org/abs/2406.11717), refusal is mediated by a single direction in the residual stream — a safety training artifact that can be cleanly removed.
+
+AI disclaimers are different. They have two layers:
+1. **Linguistic marker** ("As an AI...") — removable via abliteration
+2. **Cautious response pattern** — persists because it's tied to the model's factual self-knowledge, not a separable behavioral direction
+
+You can abliterate the phrase, but not the reasoning style it's associated with. True behavioral change would require addressing the underlying response patterns, not just their linguistic markers.
 
 ---
 
@@ -156,7 +174,7 @@ More layers = more reduction, but diminishing returns and risk of model degradat
 
 Conventional abliteration:
 - Maxime Labonne: https://huggingface.co/blog/mlabonne/abliteration
-- Original research: Arditi et al., "Refusal in LLMs is mediated by a single direction"
+- Original research: [Arditi et al., "Refusal in LLMs is mediated by a single direction"](https://arxiv.org/abs/2406.11717)
 
 Projected abliteration:
 - Jim Lai (grimjim): https://huggingface.co/blog/grimjim/projected-abliteration
